@@ -38,7 +38,7 @@ coloured lines are individual member forecasts. Ensemble mean is plotted as thic
 You may place the mouse over the lines to see more information on the plots.
 </p>
 
-<i> Plotted using <a href="https://bokeh.pydata.org/en/latest/"> Bokeh</> )
+<i> Plotted using <a href="https://bokeh.pydata.org/en/latest/"> Bokeh</>
 </i>
 
 <br />
