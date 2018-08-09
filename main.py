@@ -115,52 +115,45 @@ def update_glosea_data(attrname, old, new):
                                      amps=np.mean(amps[:, nanalysis - 1:], axis=0), \
                                      descs=data_dates[0, nanalysis - 1:])
 
-
-def do_glosea_plots(rmm_ana_dir, rmm_fcast_dir, selected_date):
-    # for Glosea5
-    nanalysis = 41
-    nforecast = 30
-    data_dates, rmm1s, rmm2s, phases, amps = read_rmms(rmm_ana_dir, \
-                                                       rmm_fcast_dir, \
-                                                       nanalysis, \
-                                                       nforecast, \
-                                                       selected_date)
-    source_ana = ColumnDataSource(data=dict(rmm1s=rmm1s[0, :nanalysis], \
-                                            rmm2s=rmm2s[0, :nanalysis], \
-                                            phases=phases[0, :nanalysis], \
-                                            amps=amps[0, :nanalysis], \
-                                            descs=data_dates[0, :nanalysis]))
-    source_ana_circle = ColumnDataSource(data=dict(rmm1s=rmm1s[0, :nanalysis], \
-                                                   rmm2s=rmm2s[0, :nanalysis], \
-                                                   phases=phases[0, :nanalysis], \
-                                                   amps=amps[0, :nanalysis], \
-                                                   descs=data_dates[0, :nanalysis]))
-    source_fcast = ColumnDataSource(data=dict(rmm1s=rmm1s[:, nanalysis - 1:].tolist(), \
-                                              rmm2s=rmm2s[:, nanalysis - 1:].tolist(), \
-                                              phases=phases[:, nanalysis - 1:].tolist(), \
-                                              amps=amps[:, nanalysis - 1:].tolist(), \
-                                              descs=data_dates[:, nanalysis - 1:]))
-    source_fcast_ensmean = ColumnDataSource(data=dict(rmm1s=np.mean(rmm1s[:, nanalysis - 1:], axis=0), \
-                                                      rmm2s=np.mean(rmm2s[:, nanalysis - 1:], axis=0), \
-                                                      phases=np.mean(phases[:, nanalysis - 1:], axis=0), \
-                                                      amps=np.mean(amps[:, nanalysis - 1:], axis=0), \
-                                                      descs=data_dates[0, nanalysis - 1:]))
-    return source_ana, source_ana_circle, source_fcast, source_fcast_ensmean
-
 # Get available data dates and data for the first
 # available date to plot as a start
 menu_dates = get_dates()
 selected_date = menu_dates[0]
 
-date_select = Select(value=selected_date, title='Date:', \
-                     options=menu_dates)
-
-# Do plots for Glosea5
+# for Glosea5
 rmm_ana_dir = '/project/MJO_GCSS/MJO_monitoring/processed_MJO_data/analysis/rmms/'
 rmm_fcast_dir = '/project/MJO_GCSS/MJO_monitoring/processed_MJO_data/glosea/rmms'
-source_ana, source_ana_circle, source_fcast, source_fcast_ensmean = do_glosea_plots(rmm_ana_dir, \
-                                                                                    rmm_fcast_dir, \
-                                                                                    selected_date)
+nanalysis = 41
+nforecast = 30
+data_dates, rmm1s, rmm2s, phases, amps = read_rmms(rmm_ana_dir, \
+                                                   rmm_fcast_dir, \
+                                                   nanalysis, \
+                                                   nforecast, \
+                                                   selected_date)
+source_ana = ColumnDataSource(data=dict(rmm1s=rmm1s[0, :nanalysis], \
+                                        rmm2s=rmm2s[0, :nanalysis], \
+                                        phases=phases[0, :nanalysis], \
+                                        amps=amps[0, :nanalysis], \
+                                        descs=data_dates[0, :nanalysis]))
+source_ana_circle = ColumnDataSource(data=dict(rmm1s=rmm1s[0, :nanalysis], \
+                                               rmm2s=rmm2s[0, :nanalysis], \
+                                               phases=phases[0, :nanalysis], \
+                                               amps=amps[0, :nanalysis], \
+                                               descs=data_dates[0, :nanalysis]))
+source_fcast = ColumnDataSource(data=dict(rmm1s=rmm1s[:, nanalysis - 1:].tolist(), \
+                                          rmm2s=rmm2s[:, nanalysis - 1:].tolist(), \
+                                          phases=phases[:, nanalysis - 1:].tolist(), \
+                                          amps=amps[:, nanalysis - 1:].tolist(), \
+                                          descs=data_dates[:, nanalysis - 1:]))
+source_fcast_ensmean = ColumnDataSource(data=dict(rmm1s=np.mean(rmm1s[:, nanalysis - 1:], axis=0), \
+                                                  rmm2s=np.mean(rmm2s[:, nanalysis - 1:], axis=0), \
+                                                  phases=np.mean(phases[:, nanalysis - 1:], axis=0), \
+                                                  amps=np.mean(amps[:, nanalysis - 1:], axis=0), \
+                                                  descs=data_dates[0, nanalysis - 1:]))
+
+# set up a drop down menu of available dates
+date_select = Select(value=selected_date, title='Date:', \
+                     options=menu_dates)
 
 # Set up plot
 hover = HoverTool(tooltips=[
@@ -201,10 +194,8 @@ plot.circle('rmm1s', 'rmm2s', source=source_ana_circle, name="analysis_dots", co
 plot.multi_line('rmm1s', 'rmm2s', source=source_fcast, line_width=2, line_color='skyblue', line_alpha=0.5)
 plot.line('rmm1s', 'rmm2s', source=source_fcast_ensmean, name="ens_mean", line_color='blue', line_width=5,
           line_alpha=0.4)
-plot.circle('rmm1s', 'rmm2s', source=source_fcast_ensmean, name="ens_mean_dots", color='blue', radius=0.05, alpha=0.3)
-
-
-
+plot.circle('rmm1s', 'rmm2s', source=source_fcast_ensmean, name="ens_mean_dots", color='blue', radius=0.05,
+            alpha=0.3)
 
 date_select.on_change('value', update_glosea_data)
 # Set up layouts and add to document
