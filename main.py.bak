@@ -8,15 +8,15 @@ from bokeh.models.widgets.inputs import DatePicker
 from datetime import datetime, timedelta
 import glob, os, sys
 import copy
-import urllib.request, urllib.error, urllib.parse  # the lib that handles the url stuff
+import urllib2  # the lib that handles the url stuff
 
 
 def read_web_dates(start_date, end_date):
     # Get available data dates and data for the first
     # available date to plot as a start
     target_url = 'http://www.bom.gov.au/climate/mjo/graphics/rmm.74toRealtime.txt'
-    req = urllib.request.Request(target_url, headers={'User-Agent': "Magic Browser"})
-    data = urllib.request.urlopen(req)
+    req = urllib2.Request(target_url, headers={'User-Agent': "Magic Browser"})
+    data = urllib2.urlopen(req)
     lines = data.readlines()[2:]  # skip 2 header lines
 
     year = np.array([int(line.split()[0]) for line in lines])
@@ -28,7 +28,7 @@ def read_web_dates(start_date, end_date):
     amp = np.array([float(line.split()[6]) for line in lines])
 
     dates = [year[i] * 10000 + month[i] * 100 + day[i] for i in range(len(year))]
-    print(start_date, end_date)
+    print start_date, end_date
     start_ind = dates.index(start_date)
     end_ind = dates.index(end_date)
     source.data = dict(rmm1s=pc1[start_ind:end_ind],
@@ -55,7 +55,7 @@ def read_local_dates(start_date, end_date):
 
     start_ind = np.where(start_date == dates)[0][0]
     end_ind = np.where(end_date == dates)[0][0]
-    print(end_ind)
+    print end_ind
     data = ColumnDataSource(data=dict(rmm1s=pc1[start_ind:end_ind],
                                rmm2s=pc2[start_ind:end_ind],
                                phases=pha[start_ind:end_ind],
