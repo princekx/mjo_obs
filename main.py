@@ -6,8 +6,7 @@ from bokeh.plotting import figure, output_file, show
 from bokeh.models.glyphs import MultiLine, Text
 from bokeh.models.widgets.inputs import DatePicker
 from datetime import datetime, timedelta
-import glob, os, sys
-import copy
+import glob, os
 import urllib.request, urllib.error, urllib.parse  # the lib that handles the url stuff
 
 
