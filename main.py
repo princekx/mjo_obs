@@ -6,6 +6,7 @@ from bokeh.plotting import figure, output_file, show
 from bokeh.models.glyphs import MultiLine, Text
 from bokeh.models.widgets.inputs import DatePicker
 from datetime import datetime, timedelta
+import pandas as pd
 import glob, os
 import urllib.request, urllib.error, urllib.parse  # the lib that handles the url stuff
 
@@ -39,27 +40,36 @@ def read_web_dates(start_date, end_date):
 
 def read_local_dates(start_date, end_date):
     target_file = '/home/h03/hadpx/python_all/mypylibs/Bokeh_examples/mjo_obs/rmm.74toRealtime.txt'
-    fa = open(target_file, 'r')
-    lines = fa.readlines()[2:]
 
-    year = np.array([int(line.split()[0]) for line in lines])
-    month = np.array([int(line.split()[1]) for line in lines])
-    day = np.array([int(line.split()[2]) for line in lines])
-    pc1 = np.array([float(line.split()[3]) for line in lines])
-    pc2 = np.array([float(line.split()[4]) for line in lines])
-    pha = np.array([int(line.split()[5]) for line in lines])
-    amp = np.array([float(line.split()[6]) for line in lines])
+    df = pd.read_csv(target_file, skiprows=1)
+    column_names = ['year', 'month',  'day', 'RMM1', 'RMM2', 'phase', 'amplitude.  Missing Value= 1.E36 or 999']
+    xdf = pd.DataFrame([d.split()[:7] for d in df.iloc[:, 0]])
+    xdf.columns = column_names
+    xdf = xdf.apply(pd.to_numeric)
 
-    dates = np.array([year[i] * 10000 + month[i] * 100 + day[i] for i in range(len(year))])
+    # fa = open(target_file, 'r')
+    # lines = fa.readlines()[2:]
+    #
+    # year = np.array([int(line.split()[0]) for line in lines])
+    # month = np.array([int(line.split()[1]) for line in lines])
+    # day = np.array([int(line.split()[2]) for line in lines])
+    # pc1 = np.array([float(line.split()[3]) for line in lines])
+    # pc2 = np.array([float(line.split()[4]) for line in lines])
+    # pha = np.array([int(line.split()[5]) for line in lines])
+    # amp = np.array([float(line.split()[6]) for line in lines])
+    #
+    # dates = np.array([year[i] * 10000 + month[i] * 100 + day[i] for i in range(len(year))])
 
+    dates = np.array([xdf.year[i] * 10000 + xdf.month[i] * 100 + xdf.day[i] for i in range(len(xdf))])
+    xdf['dates'] = dates
     start_ind = np.where(start_date == dates)[0][0]
     end_ind = np.where(end_date == dates)[0][0]
     print(end_ind)
-    data = ColumnDataSource(data=dict(rmm1s=pc1[start_ind:end_ind],
-                               rmm2s=pc2[start_ind:end_ind],
-                               phases=pha[start_ind:end_ind],
-                               amps=amp[start_ind:end_ind],
-                               descs=dates[start_ind:end_ind]))
+    data = ColumnDataSource(data=dict(rmm1s=xdf.RMM1[start_ind:end_ind],
+                               rmm2s=xdf.RMM2[start_ind:end_ind],
+                               phases=xdf.RMM2[start_ind:end_ind],
+                               amps=xdf.amplitude[start_ind:end_ind],
+                               descs=xdf.dates[start_ind:end_ind]))
 
     return data
 
