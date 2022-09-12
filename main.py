@@ -5,7 +5,7 @@ from bokeh.models import ColumnDataSource, HoverTool, Select, LabelSet, Div
 from bokeh.plotting import figure, output_file, show
 from bokeh.models.glyphs import MultiLine, Text
 from bokeh.models.widgets.inputs import DatePicker
-from datetime import datetime, timedelta
+import datetime
 import pandas as pd
 import glob, os
 import urllib.request, urllib.error, urllib.parse  # the lib that handles the url stuff
@@ -38,53 +38,39 @@ def read_web_dates(start_date, end_date):
                                descs=dates[start_ind:end_ind])
     return source
 
-def read_local_dates(start_date, end_date):
-    target_file = '/home/h03/hadpx/python_all/mypylibs/Bokeh_examples/mjo_obs/rmm.74toRealtime.txt'
+
+def read_rmms():
+    target_file = '/net/home/h03/hadpx/python_all/MyPyLibs/Bokeh_examples/mjo_obs/rmm.74toRealtime.txt'
 
     df = pd.read_csv(target_file, skiprows=1)
-    column_names = ['year', 'month',  'day', 'RMM1', 'RMM2', 'phase', 'amplitude.  Missing Value= 1.E36 or 999']
+    column_names = ['year', 'month', 'day', 'RMM1', 'RMM2', 'phase', 'amplitude']
     xdf = pd.DataFrame([d.split()[:7] for d in df.iloc[:, 0]])
     xdf.columns = column_names
     xdf = xdf.apply(pd.to_numeric)
 
-    # fa = open(target_file, 'r')
-    # lines = fa.readlines()[2:]
-    #
-    # year = np.array([int(line.split()[0]) for line in lines])
-    # month = np.array([int(line.split()[1]) for line in lines])
-    # day = np.array([int(line.split()[2]) for line in lines])
-    # pc1 = np.array([float(line.split()[3]) for line in lines])
-    # pc2 = np.array([float(line.split()[4]) for line in lines])
-    # pha = np.array([int(line.split()[5]) for line in lines])
-    # amp = np.array([float(line.split()[6]) for line in lines])
-    #
-    # dates = np.array([year[i] * 10000 + month[i] * 100 + day[i] for i in range(len(year))])
+    # Generate a string array for comparison with input dates
+    dates = np.array([datetime.datetime(int(row.year), int(row.month), int(row.day)).strftime('%Y-%m-%d')
+                      for index, row in xdf.iterrows()])
 
-    dates = np.array([xdf.year[i] * 10000 + xdf.month[i] * 100 + xdf.day[i] for i in range(len(xdf))])
     xdf['dates'] = dates
-    start_ind = np.where(start_date == dates)[0][0]
-    end_ind = np.where(end_date == dates)[0][0]
-    print(end_ind)
-    data = ColumnDataSource(data=dict(rmm1s=xdf.RMM1[start_ind:end_ind],
-                               rmm2s=xdf.RMM2[start_ind:end_ind],
-                               phases=xdf.RMM2[start_ind:end_ind],
-                               amps=xdf.amplitude[start_ind:end_ind],
-                               descs=xdf.dates[start_ind:end_ind]))
+    return xdf
 
-    return data
+
+def subset_df(xdf, start_date, end_date):
+    start_ind = np.where(start_date == xdf.dates)[0][0]
+    end_ind = np.where(end_date == xdf.dates)[0][0]
+
+    xdf = xdf.iloc[start_ind:end_ind + 1]
+    return ColumnDataSource(data=xdf)
 
 
 def update_data(attr, old, new):
-    start_date = date1_select.value
-    end_date = date2_select.value
-    start_date_x = start_date.year * 10000 + start_date.month * 100 + start_date.day
-    end_date_x = end_date.year * 10000 + end_date.month * 100 + end_date.day
-
     # Update data
-    source = read_web_dates(start_date_x, end_date_x)
+    up_df = subset_df(df, date1_select.value, date2_select.value)
+    source.data.update(up_df.data)
+    print(date1_select.value, date2_select.value)
 
-
-def make_plot(title='Forecasts'):
+def make_base_plot(title='Forecasts'):
     plot = figure(plot_height=500, plot_width=500, tools=["pan,reset,save, wheel_zoom", hover],
                   x_range=[-4, 4], y_range=[-4, 4])
 
@@ -142,55 +128,36 @@ def make_plot(title='Forecasts'):
 
 
 # Latest date
-latest_date = datetime.now() - timedelta(days=5) # allow 5 days lag
-date2_select = DatePicker(title="End Date:", min_date=datetime(1974, 6, 1),
-                          max_date=latest_date,
-                          value=datetime(latest_date.year,
-                                         latest_date.month,
-                                         latest_date.day)
-                          )
+latest_date = datetime.datetime(2000, 2, 28) - datetime.timedelta(days=5) # allow 5 days lag
+date2_select = DatePicker(title="End Date:", min_date=datetime.datetime(1974, 6, 1, 0, 0).date(),
+                          max_date=latest_date.date(), value=datetime.datetime(latest_date.year,
+                                                               latest_date.month,
+                                                               latest_date.day).date())
 
-prev_date = date2_select.max_date - timedelta(days=40)
+prev_date = latest_date - datetime.timedelta(days=40)
+date1_select = DatePicker(title="Start Date:", min_date=datetime.datetime(1974, 6, 1).date(),
+                          max_date=prev_date.date(), value=datetime.datetime(prev_date.year,
+                                                                  prev_date.month,
+                                                                  prev_date.day).date())
 
-date1_select = DatePicker(title="Start Date:", min_date=datetime(1974, 6, 1),
-                          max_date=prev_date,
-                          value=datetime(prev_date.year,
-                                         prev_date.month,
-                                         prev_date.day)
-                          )
-
-start_date = date1_select.value
-end_date = date2_select.value
-start_date_x = start_date.year * 10000 + start_date.month * 100 + start_date.day
-end_date_x = end_date.year * 10000 + end_date.month * 100 + end_date.day
-
-
-source = ColumnDataSource(data=dict(rmm1s=np.arange(10),
-                               rmm2s=np.arange(10),
-                               phases=np.arange(10),
-                               amps=np.arange(10),
-                               descs=np.arange(10)))
-#update data source
-source = read_web_dates(start_date_x, end_date_x)
-
-
-# date2_select = Select(value=date1_select.value, title='Date:', options=menu_dates)
-# get glosea data
+# the master DataFrame
+df = read_rmms()
+source = subset_df(df, date1_select.value, date2_select.value)
 
 # Set up plot
 hover = HoverTool(tooltips=[
-    ("Date", "@descs"),
-    ("RMM1", "@rmm1s"),
-    ("RMM2", "@rmm2s"),
-    ("Phase", "@phases"),
-    ("Amp", "@amps"),
+    ("Date", "@dates"),
+    ("RMM1", "@RMM1"),
+    ("RMM2", "@RMM2"),
+    ("Phase", "@phase"),
+    ("Amp", "@amplitude"),
 ], mode='mouse', names=["analysis", "analysis_dots", "ens_mean", "ens_mean_dots"])
 
 ############## Glosea plot #######################
-plot = make_plot('Observed MJO %s-%s' %(start_date_x, end_date_x))
+plot = make_base_plot('Observed MJO %s-%s' %(date1_select.value, date2_select.value))
 # # Plotting data
-plot.line('rmm1s', 'rmm2s', source=source, name="analysis", line_color='grey', line_width=5, line_alpha=0.8)
-plot.circle('rmm1s', 'rmm2s', source=source, name="analysis_dots", color='grey', radius=0.05,
+plot.line('RMM1', 'RMM2', source=source, name="analysis", line_color='grey', line_width=5, line_alpha=0.8)
+plot.circle('RMM1', 'RMM2', source=source, name="analysis_dots", color='grey', radius=0.05,
                alpha=0.8)
 
 # Menu
