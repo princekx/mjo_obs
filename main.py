@@ -5,6 +5,8 @@ from bokeh.models import ColumnDataSource, HoverTool, Select, LabelSet, Div
 from bokeh.plotting import figure, output_file, show
 from bokeh.models.glyphs import MultiLine, Text
 from bokeh.models.widgets.inputs import DatePicker
+from bokeh.models import CategoricalColorMapper
+
 import datetime
 import pandas as pd
 import glob, os
@@ -68,10 +70,11 @@ def update_data(attr, old, new):
     # Update data
     up_df = subset_df(df, date1_select.value, date2_select.value)
     source.data.update(up_df.data)
+    plot.title.text = 'Observed MJO %s-%s' %(date1_select.value, date2_select.value)
     print(date1_select.value, date2_select.value)
 
 def make_base_plot(title='Forecasts'):
-    plot = figure(plot_height=500, plot_width=500, tools=["pan,reset,save, wheel_zoom", hover],
+    plot = figure(plot_height=700, plot_width=700, tools=["pan,reset,save, wheel_zoom", hover],
                   x_range=[-4, 4], y_range=[-4, 4])
 
     plot.title.text = title
@@ -156,8 +159,8 @@ hover = HoverTool(tooltips=[
 ############## Glosea plot #######################
 plot = make_base_plot('Observed MJO %s-%s' %(date1_select.value, date2_select.value))
 # # Plotting data
-plot.line('RMM1', 'RMM2', source=source, name="analysis", line_color='grey', line_width=5, line_alpha=0.8)
-plot.circle('RMM1', 'RMM2', source=source, name="analysis_dots", color='grey', radius=0.05,
+plot.line('RMM1', 'RMM2', source=source, name="analysis", line_color='#2171b5', line_width=5, line_alpha=0.8)
+plot.circle('RMM1', 'RMM2', source=source, name="analysis_dots", color='#2171b5', radius=0.05,
                alpha=0.8)
 
 # Menu
